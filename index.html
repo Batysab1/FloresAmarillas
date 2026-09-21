@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>Flores Amarillas · Galaxia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box} html,body{margin:0;height:100%;overflow:hidden;background:#000;touch-action:none}
+    canvas{display:block} h1{position:fixed;z-index:2;inset:max(22px,env(safe-area-inset-top)) 0 auto;margin:0;padding:0 12px;color:#fffacd;text-align:center;font:clamp(1.6rem,4vw,2.75rem) 'Indie Flower',cursive;text-shadow:0 0 9px #ffd700,0 0 22px #d88900;pointer-events:none}
+    #intro{position:fixed;z-index:3;inset:0;display:grid;place-content:center;gap:clamp(12px,2.5vh,20px);padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));background:#000;color:#fffacd;text-align:center;cursor:pointer;transition:opacity .65s,visibility .65s}
+    #intro.hide{opacity:0;visibility:hidden}.flower{font-size:clamp(82px,18vmin,150px);filter:drop-shadow(0 0 14px #ffd700) drop-shadow(0 0 35px #c87900);animation:pulse 1.35s ease-in-out infinite}
+    #dedication{max-width:min(88vw,620px);margin:0;font:clamp(1.15rem,3vw,1.55rem)/1.35 'Indie Flower',cursive;text-shadow:0 0 8px #ffd700}
+    #intro span{font:clamp(1.55rem,4vw,2rem) 'Indie Flower',cursive;text-shadow:0 0 8px #ffd700;animation:blink 2s ease-in-out infinite}
+    @keyframes pulse{12%{transform:scale(1.14)}24%{transform:scale(1)}38%{transform:scale(1.07)}}@keyframes blink{50%{opacity:.52}}
+    @media(max-width:480px){h1{font-size:1.55rem;line-height:1.1}#dedication{font-size:clamp(1.05rem,5vw,1.25rem);line-height:1.28}.flower{font-size:clamp(72px,20vmin,100px)}}
+    @media(prefers-reduced-motion:reduce){.flower,#intro span{animation:none}}
+  </style>
+</head>
+<body>
+  <canvas id="space"></canvas>
+  <h1>Feliz Día de las Flores Amarillas 🌻</h1>
+  <audio id="music" loop preload="metadata"><source src="Floricienta.mp3" type="audio/mpeg"></audio>
+  <div id="intro" role="button" aria-label="Iniciar experiencia">
+    <div class="flower">🌻</div>
+    <p id="dedication">Nos conocemos hace poco, pero te merecés lo mejor y te quería dejar un presente. El regalo principal todavía me tiene que llegar; es mejor que una flor y lo vas a poder conservar. Sos una gran persona. Te quiero mucho.<br>Atte.: Bauti</p>
+    <span>Toca para iniciar</span>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.min.js"></script>
+  <script>
+    const isMobile=matchMedia('(max-width:768px),(pointer:coarse)').matches;
+    const canvas=document.querySelector('#space'), renderer=new THREE.WebGLRenderer({canvas,antialias:!isMobile,powerPreference:'high-performance'});
+    renderer.setPixelRatio(Math.min(devicePixelRatio,isMobile?1.5:2));
+    const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,4000);
+    let distance=300,targetDistance=300,rx=.2,ry=0,dragging=false,last;
+    function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()} addEventListener('resize',resize);resize();
+    const starGeometry=new THREE.BufferGeometry(), stars=new Float32Array((isMobile?1200:2000)*3);
+    for(let i=0;i<stars.length;i+=3){const r=900+Math.random()*2100,t=Math.random()*Math.PI*2,p=Math.acos(2*Math.random()-1);stars[i]=r*Math.sin(p)*Math.cos(t);stars[i+1]=r*Math.cos(p);stars[i+2]=r*Math.sin(p)*Math.sin(t)}
+    starGeometry.setAttribute('position',new THREE.BufferAttribute(stars,3));scene.add(new THREE.Points(starGeometry,new THREE.PointsMaterial({color:0xffffff,size:1.45,depthWrite:false})));
+    const core=new THREE.Mesh(new THREE.SphereGeometry(40,isMobile?32:64,isMobile?32:64),new THREE.MeshPhongMaterial({color:0x020202,shininess:35,transparent:true,opacity:.96}));scene.add(core);
+    const light=new THREE.PointLight(0xffc533,1.5,600);light.position.set(60,50,100);scene.add(light);
+    function ringMap(){const c=document.createElement('canvas');c.width=c.height=1024;const x=c.getContext('2d'),m=512,inside=210,outside=495,g=x.createRadialGradient(m,m,inside,m,m,outside);g.addColorStop(0,'#fffde9');g.addColorStop(.28,'#ffe878');g.addColorStop(.7,'#ffc225');g.addColorStop(1,'#e78b00');x.fillStyle=g;x.beginPath();x.arc(m,m,outside,0,7);x.arc(m,m,inside,0,7,true);x.fill();for(let i=0;i<28;i++){x.beginPath();x.arc(m,m,inside+(outside-inside)*i/28,0,7);x.strokeStyle=i%3?'rgba(255,255,235,.17)':'rgba(80,35,0,.25)';x.lineWidth=4+Math.random()*6;x.stroke()}return new THREE.CanvasTexture(c)}
+    const ring=new THREE.Mesh(new THREE.RingGeometry(42,116,isMobile?96:160),new THREE.MeshBasicMaterial({map:ringMap(),transparent:true,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));ring.rotation.x=Math.PI/2;scene.add(ring);
+    function radialGlow(){const c=document.createElement('canvas');c.width=c.height=512;const q=c.getContext('2d'),g=q.createRadialGradient(256,256,20,256,256,256);g.addColorStop(0,'rgba(255,246,160,.6)');g.addColorStop(.42,'rgba(255,180,0,.22)');g.addColorStop(1,'rgba(0,0,0,0)');q.fillStyle=g;q.fillRect(0,0,512,512);return new THREE.CanvasTexture(c)}
+    const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:radialGlow(),transparent:true,depthWrite:false}));glow.scale.set(355,355,1);scene.add(glow);
+    const phrases=['Como el girasol, hoy miro hacia vos','Me alegra mucho haberte conocido','Con vos hasta lo simple se siente distinto','Hoy el amarillo tiene tu nombre','Sos una persona muy especial','Un girasol para sacarte una sonrisa','Me encanta la buena energía que tenés','Tu risa le hace bien al día','Qué lindo poder conocerte un poco más','Pétalos dorados pensados para vos','Ojalá este detalle te saque una sonrisa','Esta flor te manda un abrazo','Acá tenés a alguien que te desea lo mejor','Sos de esas personas que dan calma','Me gusta la forma que tenés de ser','Qué suerte habernos cruzado','Te merecés cosas lindas','Un poquito de amarillo para tu día','Me pone contento verte sonreír','Sos una gran persona, posta','Tenés una luz muy linda','Ojalá hoy tengas un día hermoso','Me gusta compartir momentos con vos','Este detalle es para vos','Gracias por ser tan buena onda','Conocerte fue una linda sorpresa','Sos alguien que vale mucho','Me alegra poder hablar con vos','Que nunca te falten motivos para sonreír','Te dejo este presente con cariño','Sos más especial de lo que pensás','Me copa la energía que transmitís','Ojalá te guste este pequeño detalle','Te deseo siempre lo mejor','Tenés algo que hace bien','Qué lindo coincidir con vos','Un abrazo grande para vos','Me gusta verte feliz','Sos una persona re linda','¿Cuándo sale Florida?','Acordate que me debés jugar al plato'];
+    function label(text,color){const c=document.createElement('canvas');c.width=640;c.height=128;const x=c.getContext('2d');let size=54;x.textAlign='center';x.textBaseline='middle';do{x.font=`${size}px Indie Flower,cursive`;size-=2}while(x.measureText(text).width>570&&size>20);x.fillStyle='#fff8d0';x.shadowBlur=22;x.shadowColor=color;x.fillText(text,320,64);return new THREE.CanvasTexture(c)}
+    const words=new THREE.Group(), flowers=new THREE.Group();scene.add(words,flowers);const colors=['#ffd700','#ffe066','#ffb347','#fff2b0','#f4c430'];
+    function place(group,sprite,radius,speed){const phi=Math.acos(2*Math.random()-1),theta=Math.random()*Math.PI*2;sprite.position.set(radius*Math.sin(phi)*Math.cos(theta),radius*Math.cos(phi),radius*Math.sin(phi)*Math.sin(theta));sprite.userData={phi,theta,radius,speed};group.add(sprite)}
+    document.fonts.ready.then(()=>{const wordCount=isMobile?96:145,flowerCount=isMobile?18:27;for(let i=0;i<wordCount;i++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:label('🌻 '+phrases[i%phrases.length],colors[i%colors.length]),transparent:true}));s.scale.set(69,14,1);place(words,s,150+Math.random()*145,.0009+Math.random()*.0012)}for(let i=0;i<flowerCount;i++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:label(i%3?'🌼':'🌻','#ffd700'),transparent:true}));s.scale.set(27+Math.random()*19,27+Math.random()*19,1);place(flowers,s,145+Math.random()*165,.0008+Math.random()*.001)}});
+    function rotate(group){group.children.forEach(s=>{s.userData.theta+=s.userData.speed;s.position.x=s.userData.radius*Math.sin(s.userData.phi)*Math.cos(s.userData.theta);s.position.z=s.userData.radius*Math.sin(s.userData.phi)*Math.sin(s.userData.theta);s.material.opacity=.75+.25*Math.sin(performance.now()/900+s.userData.radius)})}
+    function render(){requestAnimationFrame(render);ring.rotation.z+=.003;const n=performance.now()/1000;core.scale.setScalar(1+.045*Math.sin(n*3));glow.scale.setScalar(355*(1+.025*Math.sin(n*.45)));rotate(words);rotate(flowers);distance+=(targetDistance-distance)*.06;const cx=Math.cos(rx);camera.position.set(distance*Math.sin(ry)*cx,distance*Math.sin(rx),distance*Math.cos(ry)*cx);camera.lookAt(0,0,0);renderer.render(scene,camera)}render();
+    addEventListener('pointerdown',e=>{dragging=true;last=[e.clientX,e.clientY]});addEventListener('pointerup',()=>dragging=false);addEventListener('pointercancel',()=>dragging=false);addEventListener('pointermove',e=>{if(!dragging)return;ry-=(e.clientX-last[0])/innerWidth*5;rx=Math.max(-1.2,Math.min(1.2,rx+(e.clientY-last[1])/innerHeight*3.5));last=[e.clientX,e.clientY]});addEventListener('wheel',e=>{targetDistance=Math.max(165,Math.min(600,targetDistance+e.deltaY*.25))},{passive:true});
+    const music=document.querySelector('#music');
+    document.querySelector('#intro').addEventListener('click',e=>{e.currentTarget.classList.add('hide');music.play().catch(()=>{})});
+  </script>
+</body>
+</html>
